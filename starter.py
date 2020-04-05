@@ -16,23 +16,86 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 
+
+'''
+
+Use SQLAlchemy create_engine to connect to your sqlite database.
+'''
+
 engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+
+'''
+Choose a start date and end date for your trip. Make sure that your vacation range is approximately 3-15 days total.
+
+2015 jan 10 to jan 24 
+'''
 
 
 # reflect an existing database into a new model
 
+Base = automap_base()
+
+Base.prepare(engine, reflect=True)
+
+#print(Base.classes.keys())
+
+
 # reflect the tables
 
+
 # We can view all of the classes that automap found
+
+'''
+Use SQLAlchemy automap_base() to reflect your tables into classes and save a reference to those classes called Station and Measurement.
+
+'''
 
 
 # Save references to each table
 
+Measurement = Base.classes.measurement
+Station = Base.classes.station
+
+
+
 
 # Create our session (link) from Python to the DB
 
+session = Session(engine)
+
+
+
 
 # Design a query to retrieve the last 12 months of precipitation data and plot the results
+
+#first_row = session.query(Measurement).first()
+#print(first_row.__dict__)
+
+#for row in session.query(Measurement.date, Measurement.prcp).limit(15).all():
+#    print(row)
+
+dates = []
+rainfalls = []
+for a,b in session.query(Measurement.date, Measurement.prcp).\
+    filter(Measurement.date > '2014-01-15').filter(Measurement.date < '2015-01-15').\
+    order_by(Measurement.date).all():
+        dates.append(a)
+        rainfalls.append(b)
+
+for i in range(len(rainfalls)):
+    if rainfalls[i] == rainfalls[29]:
+        rainfalls[i] = 0.0
+
+
+print(rainfalls)
+print(dates)
+
+data = pd.DataFrame(rainfalls, dates)
+data.columns = ['rainfall']
+data.index.name = 'date'
+data.fillna(0.0, inplace=True)
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    print(data)
 
 # Calculate the date 1 year ago from the last data point in the database
 
@@ -44,8 +107,18 @@ engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 
 # Use Pandas Plotting with Matplotlib to plot the data
 
+plt.figure()
+data.plot()
+plt.ylim((0, 13))
+plt.xlabel('Dates')
+plt.ylabel('Rainfall in Inches')
+plt.title('Rainfall for jan 14 2014 to jan 14 2015 ')
+plt.show()
 
-# Use Pandas to calcualte the summary statistics for the precipitation data
+# Use Pandas to calculate the summary statistics for the precipitation data
+
+print(data.describe())
+
 
 # Design a query to show how many stations are available in this dataset?
 
