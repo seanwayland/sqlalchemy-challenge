@@ -4,6 +4,7 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
+from collections import Counter
 
 from flask import Flask, jsonify
 
@@ -29,6 +30,17 @@ Station = Base.classes.station
 # Flask Setup
 #################################################
 app = Flask(__name__)
+
+
+def queryDB(query):
+    session = Session(engine)
+    Base = automap_base()
+    Base.prepare(engine, reflect=True)
+    # query the data
+    results = session.query(query)
+    session.close()
+    return results
+
 
 
 #################################################
@@ -83,6 +95,89 @@ def precipitation():
     result = {dates[i]: rainfalls[i] for i in range(len(dates))}
 
     return jsonify(result)
+'''
+/api/v1.0/stations
+
+Return a JSON list of stations from the dataset.
+'''
+@app.route("/api/v1.0/stations")
+def stations():
+
+    results = queryDB(Station.name)
+
+    result = []
+    for row in results:
+        result.append(row)
+
+    print(result)
+
+    return(jsonify(result))
+
+
+'''
+
+/api/v1.0/tobs
+
+Query the dates and temperature observations of the most active station for the last year of data.
+
+Return a JSON list of temperature observations (TOBS) for the previous year.
+
+dates = []
+rainfalls = []
+for a,b in session.query(Measurement.date, Measurement.prcp).\
+    filter(Measurement.date > '2014-01-15').filter(Measurement.date < '2015-01-15').\
+    order_by(Measurement.date).all():
+        dates.append(a)
+        rainfalls.append(b)
+'''
+
+@app.route("/api/v1.0/tobs")
+def tobs():
+
+    session = Session(engine)
+    Base = automap_base()
+    Base.prepare(engine, reflect=True)
+    # query the data
+    stations = []
+    rainfalls = []
+    results = []
+    # get results for year 2017
+    for a,b,c in session.query(Measurement.station, Measurement.prcp, Measurement.date).\
+    filter(Measurement.date > '2017-01-01').\
+    order_by(Measurement.station) .\
+    order_by(Measurement.date).all():
+        resultsdict = {}
+        resultsdict["station"] = a
+        resultsdict["rainfall"] = b
+        resultsdict["date"] = c
+        results.append(resultsdict)
+    session.close()
+    # convert to dataframe
+    data = pd.DataFrame(results)
+    # ditch rows with null values
+    data = data.dropna()
+    # sort to find station with most results
+    counts = data.groupby('station').count()
+    counts = counts.sort_values('date', ascending = False)
+    mostActiveStation = counts.index[0]
+    # filter data based on station with most values
+    data2 = data.loc[data['station'] == mostActiveStation]
+    print(data2)
+    jsondata = data2.to_json(orient = "records")
+    #print(jsondata)
+   # return('hi')
+    return(jsondata)
+
+
+
+
+    return "hi"
+
+
+
+
+
+
 
 
 
