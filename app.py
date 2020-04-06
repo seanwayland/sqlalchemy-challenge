@@ -10,6 +10,9 @@ from flask import Flask, jsonify
 
 import pandas as pd
 
+import datetime as dt
+import json
+
 
 #################################################
 # Database Setup
@@ -41,6 +44,8 @@ def queryDB(query):
     session.close()
     return results
 
+def trim_word(word, from_start=0, from_end=0):
+    return word[from_start:len(word) - from_end]
 
 
 #################################################
@@ -172,6 +177,59 @@ def tobs():
 
 
     return "hi"
+
+
+'''/api/v1.0/<start>'''
+'''
+Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
+
+When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
+
+'''
+
+@app.route("/api/v1.0/<start>")
+def start(start):
+
+    session = Session(engine)
+    Base = automap_base()
+    Base.prepare(engine, reflect=True)
+    # query the data
+    min = 100
+    max = 0
+    sum = 0
+    count = 0
+    start = trim_word(start,1,1)
+
+    # get results for year 2017
+    for row in session.query(Measurement.tobs, Measurement.date).\
+    filter(Measurement.date > start):
+    #filter(Measurement.date > '2017-01-01'):
+
+        val = row.tobs
+        sum = sum + val
+        if val < min:
+            min = val
+        if val > max:
+            max = val
+        count = count + 1
+
+
+    session.close()
+
+
+
+    if count == 0 :
+        return("no results found. Query should be structured YYYY-MM-DD")
+    else:
+        resultsdict = {}
+        resultsdict["TMIN"] = str(min)
+        resultsdict["TMAX"] = str(max)
+        resultsdict["TAVG"] = str(sum/count)
+        result = json.dumps(resultsdict)
+        return(result)
+
+
+
 
 
 
