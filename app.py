@@ -229,6 +229,60 @@ def start(start):
         return(result)
 
 
+'''
+
+/api/v1.0/<start>/<end>
+
+'''
+
+
+@app.route("/api/v1.0/<start>/<end>")
+def startend(start, end):
+
+    session = Session(engine)
+    Base = automap_base()
+    Base.prepare(engine, reflect=True)
+    # query the data
+    min = 100
+    max = 0
+    sum = 0
+    count = 0
+    start = trim_word(start,1,1)
+    end = trim_word(end,1,1)
+
+    # get results for year 2017
+    for row in session.query(Measurement.tobs, Measurement.date).\
+    filter(Measurement.date > start).filter(Measurement.date < end):
+
+
+        val = row.tobs
+        sum = sum + val
+        if val < min:
+            min = val
+        if val > max:
+            max = val
+        count = count + 1
+
+
+    session.close()
+
+
+
+    if count == 0 :
+        return("no results found. Query should be structured YYYY-MM-DD/YYYY-MM-DD")
+    else:
+        resultsdict = {}
+        resultsdict["TMIN"] = str(min)
+        resultsdict["TMAX"] = str(max)
+        resultsdict["TAVG"] = str(sum/count)
+        result = json.dumps(resultsdict)
+        return(result)
+
+
+
+
+
+
 
 
 
