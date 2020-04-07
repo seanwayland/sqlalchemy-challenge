@@ -113,21 +113,20 @@ plt.title('Number of temp observations for station with most values ')
 plt.show()
 
 
+'''
+
+Hawaii is reputed to enjoy mild weather all year. 
+Is there a meaningful difference between the temperature in, for example, June and December?
+You may either use SQLAlchemy or pandas's read_csv() to perform this portion.
+Identify the average temperature in June at all stations across all available years in the dataset.
+ Do the same for December temperature.
+Use the t-test to determine whether the difference in the means, if any, is statistically significant. 
+Will you use a paired t-test, or an unpaired t-test? Why?
 
 
-#Design a query to find the most active stations.
 
-#List the stations and observation counts in descending order.
+'''
 
-#Which station has the highest number of observations?
-
-#Hint: You may need to use functions such as func.min, func.max, func.avg, and func.count in your queries.
-
-#Design a query to retrieve the last 12 months of temperature observation data (TOBS).
-
-#Filter by the station with the highest number of observations.
-
-#Plot the results as a histogram with bins=12.
 
 
 
