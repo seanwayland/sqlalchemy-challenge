@@ -200,14 +200,115 @@ values = calc_temps('2014-01-15', '2015-01-15')
 print(values)
 
 df5 = pd.DataFrame(values, columns=['Min Temp', 'Average Temp', 'Max Temp'])
-avg_temp = df5['Average Temp']
 tmin_tmax_temp = df5.iloc[0]['Max Temp'] - df5.iloc[0]['Min Temp']
+avg_temp = df5['Average Temp']
 avg_temp.plot(kind='bar', yerr=tmin_tmax_temp, figsize=(5,8), alpha=0.6, color='coral')
-plt.title("Average temperature for trip", fontsize=20)
+plt.title("Average temperature for trip", fontsize=18)
 plt.ylabel("Temp in farenheight")
 plt.xticks([])
 plt.grid()
 plt.show()
+
+''''
+Calculate the rainfall per weather station using the previous year's matching dates.
+ '''
+
+engine = create_engine("sqlite:///hawaii.sqlite")
+session = Session(engine)
+# reflect an existing database into a new model
+Base = automap_base()
+# reflect the tables
+Base.prepare(engine, reflect=True)
+
+# Save reference to the table
+
+Measurement = Base.classes.measurement
+Station = Base.classes.station
+
+d7 =  session.query(Measurement.station, Measurement.prcp).\
+    filter(Measurement.date > '2014-01-15').filter(Measurement.date < '2015-01-15').\
+    order_by(Measurement.station).all()
+rainData = pd.DataFrame(d7)
+
+#print(rainData)
+
+stationTotals = rainData.groupby(['station']).sum()
+print(stationTotals)
+
+
+# Create a query that will calculate the daily normals
+# (i.e. the averages for tmin, tmax, and tavg for all historic data matching a specific month and day)
+
+def daily_normals(date):
+    """Daily Normals.
+
+    Args:
+        date (str): A date string in the format '%m-%d'
+
+    Returns:
+        A list of tuples containing the daily normals, tmin, tavg, and tmax
+
+    """
+
+    sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
+    return session.query(*sel).filter(func.strftime("%m-%d", Measurement.date) == date).all()
+
+#print(daily_normals("01-01"))
+
+tripDates = [("01-10"), ("01-11"), ("01-12"), ("01-13"), ("01-14"), ("01-15")]
+
+tripData = []
+
+for i in range(6):
+    tripData.append(daily_normals(tripDates[i]))
+tmin = []
+tmax = []
+tavg = []
+for v in tripData:
+    tmin.append(v[0][0])
+    tmax.append(v[0][1])
+    tavg.append(v[0][2])
+
+d10 = list(zip(tmin,tmax,tavg))
+
+
+
+tripdf = pd.DataFrame( data = d10, index = tripDates, columns = [ 'tmin', 'tavg', 'tmax'])
+print(tripdf)
+
+
+tripdf.plot.area( stacked = False, figsize=(5,8), alpha=0.6)
+plt.title("daily normals for trip dates", fontsize=18)
+plt.ylabel("temps in farenhights")
+plt.xlabel("date")
+plt.grid()
+plt.show()
+'''
+
+
+Calculate the daily normals. Normals are the averages for the min, avg, and max temperatures.
+
+You are provided with a function called daily_normals that will calculate the daily normals for a specific date.
+ 
+This date string will be in the format %m-%d. Be sure to use all historic TOBS that match that date string.
+
+Create a list of dates for your trip in the format %m-%d. Use the daily_normals function to calculate the normals for each date string and append the results to a list.
+
+Load the list of daily normals into a Pandas DataFrame and set the index equal to the date.
+
+Use Pandas to plot an area plot (stacked=False) for the daily normals.
+
+
+'''
+
+# Calculate the rainfall per weather station using the previous year's matching dates.
+
+'''
+
+# Calculate the total amount of rainfall per weather station for your trip dates using the previous year's matching dates.
+# Sort this in descending order by precipitation amount and list the station, name, latitude, longitude, and elevation
+
+'''
 
 
 
