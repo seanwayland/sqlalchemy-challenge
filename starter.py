@@ -91,13 +91,27 @@ data = pd.DataFrame(results)
 data = data.dropna()
 # sort to find station with most results
 counts = data.groupby('station').count()
+
 counts = counts.sort_values('date', ascending = False)
+
+
+
+
 mostActiveStation = counts.index[0]
 # filter data based on station with most values
 data2 = data.loc[data['station'] == mostActiveStation]
-#print(data2)
+print(data2)
 print('most active station is: ')
 print(mostActiveStation)
+
+# plot counts
+d3 = data2['tobs'].tolist()
+plt.hist(d3, bins = 12)
+plt.xlabel('Temp')
+plt.ylabel('Frequency')
+plt.title('Number of temp observations for station with most values ')
+plt.show()
+
 
 
 
